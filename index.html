@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#050914" />
+  <title>DNA Lab | Sequence Analyzer</title>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+    :root {
+      color-scheme: dark;
+      --bg: #050914;
+      --panel: rgba(12, 21, 39, 0.88);
+      --panel-light: #101d34;
+      --line: rgba(125, 170, 218, 0.15);
+      --text: #e9f2ff;
+      --muted: #8293ae;
+      --cyan: #4de2f0;
+      --blue: #578bff;
+      --green: #77f2bd;
+      --red: #ff7185;
+      --mono: "DM Mono", monospace;
+      --sans: "Space Grotesk", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 36px 20px;
+      color: var(--text);
+      font-family: var(--sans);
+      background:
+        radial-gradient(ellipse at 50% -20%, rgba(31, 92, 160, 0.27), transparent 55%),
+        radial-gradient(ellipse at 100% 80%, rgba(23, 63, 119, 0.13), transparent 45%),
+        var(--bg);
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      content: "";
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(110, 159, 209, 0.11) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(110, 159, 209, 0.11) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 85%);
+    }
+
+    .app {
+      width: min(100%, 1040px);
+      margin: auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      color: var(--muted);
+      font: 11px var(--mono);
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border: 1px solid rgba(77, 226, 240, 0.4);
+      border-radius: 9px;
+      color: var(--cyan);
+      background: rgba(77, 226, 240, 0.08);
+      font-size: 18px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 6vw, 54px);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background:
+        linear-gradient(120deg, rgba(17, 36, 65, 0.94), rgba(7, 14, 29, 0.96) 70%);
+      box-shadow: 0 25px 90px rgba(0, 0, 0, 0.32);
+    }
+
+    .hero::after {
+      position: absolute;
+      top: -100px;
+      right: -50px;
+      width: 310px;
+      height: 310px;
+      border: 1px solid rgba(77, 226, 240, 0.12);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 28px rgba(77, 226, 240, 0.025),
+        0 0 0 58px rgba(77, 226, 240, 0.02);
+      content: "";
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--cyan);
+      font: 11px var(--mono);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 58px);
+      line-height: 1.04;
+      letter-spacing: -0.055em;
+    }
+
+    h1 span {
+      color: var(--cyan);
+    }
+
+    .intro {
+      max-width: 590px;
+      margin: 15px 0 0;
+      color: #9aacc5;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      min-width: 0;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
+      backdrop-filter: blur(12px);
+    }
+
+    .card-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .card-heading h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .tag {
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--muted);
+      font: 10px var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 9px;
+      color: #bdcbe0;
+      font-size: 13px;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 145px;
+      resize: vertical;
+      padding: 15px;
+      border: 1px solid rgba(125, 170, 218, 0.19);
+      border-radius: 12px;
+      outline: none;
+      color: var(--cyan);
+      background: #07101f;
+      font: 14px/1.8 var(--mono);
+      transition: border-color 160ms, box-shadow 160ms;
+    }
+
+    textarea:focus {
+      border-color: rgba(77, 226, 240, 0.62);
+      box-shadow: 0 0 0 3px rgba(77, 226, 240, 0.08);
+    }
+
+    textarea::placeholder {
+      color: #52647f;
+    }
+
+    .hint {
+      margin: 9px 0 18px;
+      color: var(--muted);
+      font: 11px/1.6 var(--mono);
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 10px;
+      color: #03111c;
+      background: linear-gradient(100deg, var(--cyan), #73baff);
+      cursor: pointer;
+      font: 700 13px var(--sans);
+      transition: transform 160ms, filter 160ms, box-shadow 160ms;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+      box-shadow: 0 9px 28px rgba(77, 226, 240, 0.18);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .message {
+      min-height: 19px;
+      margin: 12px 0 0;
+      color: var(--red);
+      font: 11px/1.6 var(--mono);
+    }
+
+    .empty-state {
+      display: grid;
+      min-height: 250px;
+      place-items: center;
+      border: 1px dashed rgba(125, 170, 218, 0.18);
+      border-radius: 12px;
+      color: var(--muted);
+      text-align: center;
+      font: 12px/1.8 var(--mono);
+    }
+
+    .empty-icon {
+      display: block;
+      margin-bottom: 10px;
+      color: #476789;
+      font-size: 28px;
+    }
+
+    .results[hidden],
+    .empty-state[hidden] {
+      display: none;
+    }
+
+    .result-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 11px 12px;
+      border: 1px solid rgba(119, 242, 189, 0.2);
+      border-radius: 10px;
+      color: var(--green);
+      background: rgba(119, 242, 189, 0.06);
+      font: 12px var(--mono);
+    }
+
+    .result-banner.invalid {
+      border-color: rgba(255, 113, 133, 0.22);
+      color: var(--red);
+      background: rgba(255, 113, 133, 0.06);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      padding: 12px 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(5, 12, 25, 0.56);
+      text-align: center;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--cyan);
+      font: 20px var(--mono);
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font: 10px var(--mono);
+    }
+
+    .data-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid rgba(125, 170, 218, 0.1);
+    }
+
+    .data-row:last-child {
+      border-bottom: 0;
+    }
+
+    .data-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .data-value {
+      overflow-wrap: anywhere;
+      color: #dce9fc;
+      font: 12px/1.65 var(--mono);
+      text-align: right;
+    }
+
+    .sequence-value {
+      color: var(--cyan);
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 17px;
+      color: #586a85;
+      font: 10px var(--mono);
+    }
+
+    @media (max-width: 740px) {
+      body {
+        padding: 20px 14px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        font-size: 9px;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .card {
+        padding: 18px;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .footer {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">⌬</span>
+        <span>Helix / Research Console</span>
+      </div>
+      <div class="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        SYSTEM ONLINE
+      </div>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">Molecular diagnostics · Module 01</p>
+      <h1>DNA Sequence <span>Analyzer</span></h1>
+      <p class="intro">
+        Submit a nucleotide sequence to validate its bases, count each nucleotide,
+        calculate GC content, and generate its complementary strand.
+      </p>
+    </section>
+
+    <section class="workspace" aria-label="DNA analysis workspace">
+      <form class="card" id="dnaForm">
+        <div class="card-heading">
+          <h2>Sequence Input</h2>
+          <span class="tag">A · T · G · C</span>
+        </div>
+
+        <label for="dnaInput">Enter DNA sequence</label>
+        <textarea
+          id="dnaInput"
+          placeholder="Example: ATGCGTAC..."
+          spellcheck="false"
+          autocapitalize="characters"
+          aria-describedby="inputHint"
+        ></textarea>
+
+        <p class="hint" id="inputHint">
+          Spaces and line breaks are ignored. Accepted bases: A, T, G, C.
+        </p>
+
+        <button type="submit">
+          <span aria-hidden="true">⌕</span>
+          Analyze Sequence
+        </button>
+        <p class="message" id="message" role="alert"></p>
+      </form>
+
+      <section class="card" aria-live="polite">
+        <div class="card-heading">
+          <h2>Analysis Report</h2>
+          <span class="tag" id="reportTag">Awaiting input</span>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <div>
+            <span class="empty-icon" aria-hidden="true">⌬</span>
+            Submit a sequence to initialize<br />the analysis report.
+          </div>
+        </div>
+
+        <div class="results" id="results" hidden>
+          <div class="result-banner" id="validity"></div>
+
+          <div class="metrics">
+            <div class="metric"><strong id="countA">0</strong><span>ADENINE · A</span></div>
+            <div class="metric"><strong id="countT">0</strong><span>THYMINE · T</span></div>
+            <div class="metric"><strong id="countG">0</strong><span>GUANINE · G</span></div>
+            <div class="metric"><strong id="countC">0</strong><span>CYTOSINE · C</span></div>
+          </div>
+
+          <div class="data-row">
+            <span class="data-label">Sequence length</span>
+            <span class="data-value" id="length">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">GC content</span>
+            <span class="data-value" id="gcContent">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Complement</span>
+            <span class="data-value sequence-value" id="complement">—</span>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <footer class="footer">
+      <span>HELIX LAB · SEQUENCE TOOLS</span>
+      <span>LOCAL PROCESSING · NO DATA UPLOAD</span>
+    </footer>
+  </main>
+
+  <script>
+    const form = document.getElementById("dnaForm");
+    const input = document.getElementById("dnaInput");
+    const message = document.getElementById("message");
+    const results = document.getElementById("results");
+    const emptyState = document.getElementById("emptyState");
+    const validity = document.getElementById("validity");
+    const reportTag = document.getElementById("reportTag");
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      message.textContent = "";
+
+      // Match the Python program's uppercase behavior and ignore whitespace.
+      const dna = input.value.toUpperCase().replace(/\s/g, "");
+
+      if (!dna) {
+        message.textContent = "Please enter a DNA sequence before analysis.";
+        return;
+      }
+
+      const isValid = /^[ATGC]+$/.test(dna);
+      const counts = {
+        A: [...dna].filter(base => base === "A").length,
+        T: [...dna].filter(base => base === "T").length,
+        G: [...dna].filter(base => base === "G").length,
+        C: [...dna].filter(base => base === "C").length
+      };
+
+      // For invalid input, show a complement only when every base can be paired.
+      const complement = isValid
+        ? [...dna].map(base => ({ A: "T", T: "A", G: "C", C: "G" })[base]).join("")
+        : "Unavailable — sequence contains invalid bases";
+
+      const gcPercent = ((counts.G + counts.C) / dna.length) * 100;
+
+      document.getElementById("countA").textContent = counts.A;
+      document.getElementById("countT").textContent = counts.T;
+      document.getElementById("countG").textContent = counts.G;
+      document.getElementById("countC").textContent = counts.C;
+      document.getElementById("length").textContent = `${dna.length} bases`;
+      document.getElementById("gcContent").textContent = `${gcPercent.toFixed(2)}%`;
+      document.getElementById("complement").textContent = complement;
+
+      validity.classList.toggle("invalid", !isValid);
+      validity.textContent = isValid
+        ? "✓  Valid DNA · Analysis complete"
+        : "⚠  Invalid DNA · Only A, T, G, and C are accepted";
+
+      reportTag.textContent = isValid ? "Analysis complete" : "Check sequence";
+      emptyState.hidden = true;
+      results.hidden = false;
+    });
+  </script>
+</body>
+</html>
